@@ -39,3 +39,28 @@ app.get('/api/livekit/token', (req, res) => {
     const token = at.toJwt();
     res.send({ token, serverUrl: LIVEKIT_SERVER_URL });
 });
+// 2. TWILIO SMS ALERT ROUTE
+app.post('/api/alert-sms', async (req, res) => {
+    const alertData = req.body; 
+    
+    const smsBody = `
+🚨 EMERGENCY ALERT: ${alertData.name} is in danger!
+LIVE LOCATION: ${alertData.googleMapsLink}
+LIVE STREAM: ${alertData.viewerLink} 
+CALL CONTACT: ${alertData.emergencyPhone}
+    `.trim();
+    try {
+        await twilioClient.messages.create({
+            body: smsBody,
+            to: alertData.emergencyPhone, // The emergency contact's number
+            from: TWILIO_PHONE_NUMBER     // Your Twilio number
+        });
+        res.status(200).send({ message: 'SMS alert sent.' });
+    } catch (error) {
+        console.error('[SMS] Error:', error.message);
+        res.status(500).send({ error: 'Failed to send SMS.' });
+    }
+});
+app.listen(port, () => {
+    console.log(`Server running at http://localhost:${3000}`);
+});
